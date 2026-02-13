@@ -1,0 +1,67 @@
+.App {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.voice-call-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  min-height: 60vh;
+}
+
+.livekit-room {
+  width: 100%;
+  max-width: 800px;
+  margin: 2rem auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.conversation-log {
+  width: 100%;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.message.user {
+  background-color: #e3f2fd;
+  margin-left: 2rem;
+}
+
+.message.assistant {
+  background-color: #f5f5f5;
+  margin-right: 2rem;
+}
+
+.appointment-card {
+  margin-bottom: 1rem;
+  transition: transform 0.2s;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px);
+}
+
+.stats-card {
+  text-align: center;
+  padding: 2rem;
+}
+
+.stats-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1976d2;
+}
