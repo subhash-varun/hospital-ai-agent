@@ -14,7 +14,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
-import { Chat as ChatIcon, Send as SendIcon, Person as PersonIcon, SmartToy as BotIcon, VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon } from '@mui/icons-material';
+import { Chat as ChatIcon, Send as SendIcon, Person as PersonIcon, SmartToy as BotIcon, VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
 import { triageAPI } from '../services/api';
 
 function TextChat() {
@@ -27,6 +27,9 @@ function TextChat() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [enableTTS, setEnableTTS] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [recordedChunks, setRecordedChunks] = useState([]);
   const conversationEndRef = useRef(null);
 
   // Auto-scroll to latest message
@@ -141,6 +144,100 @@ function TextChat() {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       sendMessage();
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/wav' });
+        await processVoiceInput(audioBlob);
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      setMediaRecorder(recorder);
+      setRecordedChunks(chunks);
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      setError('Could not access microphone. Please check permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const processVoiceInput = async (audioBlob) => {
+    setIsTyping(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('audio_file', audioBlob, 'voice_input.wav');
+
+      const response = await triageAPI.transcribe(formData);
+      const transcribedText = response.data.transcription;
+
+      if (transcribedText && transcribedText.trim()) {
+        // Add the transcribed message as user input
+        const voiceMessage = {
+          role: 'user',
+          content: transcribedText.trim(),
+          timestamp: new Date(),
+          isVoice: true,
+        };
+
+        addMessage(voiceMessage);
+
+        // Send the transcribed text to get AI response
+        const messages = conversationLog.concat(voiceMessage).map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+
+        const aiResponse = await triageAPI.conversation({ 
+          messages,
+          enable_tts: enableTTS 
+        });
+
+        const assistantMessage = {
+          role: 'assistant',
+          content: aiResponse.data.response,
+          timestamp: new Date(),
+        };
+
+        addMessage(assistantMessage);
+
+        // Play audio if TTS is enabled and audio data is available
+        if (enableTTS && aiResponse.data.audio_data) {
+          playAudio(aiResponse.data.audio_data);
+        }
+      } else {
+        setError('Could not transcribe audio. Please try speaking again or type your message.');
+      }
+
+    } catch (err) {
+      console.error('Error processing voice input:', err);
+      setError('Failed to process voice input. Please try again or type your message.');
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -295,13 +392,27 @@ function TextChat() {
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  disabled={isTyping}
+                  disabled={isTyping || isRecording}
                   sx={{ flexGrow: 1 }}
                 />
                 <IconButton
+                  color={isRecording ? "error" : "primary"}
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isTyping}
+                  sx={{ 
+                    mb: 1,
+                    backgroundColor: isRecording ? '#ffebee' : 'transparent',
+                    '&:hover': {
+                      backgroundColor: isRecording ? '#ffcdd2' : undefined,
+                    }
+                  }}
+                >
+                  {isRecording ? <MicOffIcon /> : <MicIcon />}
+                </IconButton>
+                <IconButton
                   color="primary"
                   onClick={sendMessage}
-                  disabled={!currentMessage.trim() || isTyping}
+                  disabled={!currentMessage.trim() || isTyping || isRecording}
                   sx={{ mb: 1 }}
                 >
                   <SendIcon />
@@ -316,7 +427,7 @@ function TextChat() {
 
               <Box sx={{ mt: 2, p: 2, backgroundColor: '#fff3e0', borderRadius: 1 }}>
                 <Typography variant="caption" color="text.secondary">
-                  💡 <strong>Tip:</strong> Describe your symptoms clearly. The AI can help assess your condition and schedule appointments.
+                  💡 <strong>Tip:</strong> Describe your symptoms clearly or use voice input. The AI can help assess your condition and schedule appointments.
                 </Typography>
               </Box>
             </CardContent>

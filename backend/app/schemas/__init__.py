@@ -8,13 +8,6 @@ from .appointment import (
     AvailableSlotsRequest,
     AvailableSlotsResponse
 )
-from .livekit import (
-    TokenRequest,
-    TokenResponse,
-    RoomInfo,
-    PatientCallRequest,
-    PatientCallResponse
-)
 from .triage import (
     TriageRequest,
     TriageResponse,
@@ -28,11 +21,6 @@ __all__ = [
     "AppointmentResponse",
     "AvailableSlotsRequest",
     "AvailableSlotsResponse",
-    "TokenRequest",
-    "TokenResponse",
-    "RoomInfo",
-    "PatientCallRequest",
-    "PatientCallResponse",
     "TriageRequest",
     "TriageResponse",
     "ConversationRequest",

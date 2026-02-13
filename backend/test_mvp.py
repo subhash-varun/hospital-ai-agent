@@ -17,10 +17,9 @@ try:
         print(f'Response: {result["response"]}')
         print(f'Has Audio: {bool(result.get("audio_data"))}')
         if result.get('audio_data'):
-            print(f'Audio Data Length: {len(result["audio_data"])}')
-            print('SUCCESS: TTS audio generated!')
+            print('✅ TTS working!')
         else:
-            print('No audio data received')
+            print('❌ No audio data')
     else:
         print(f'Error: {response.text}')
 except Exception as e:

@@ -33,6 +33,11 @@ export const livekitAPI = {
 export const triageAPI = {
   analyzeSymptoms: (data) => api.post('/api/triage/analyze', data),
   conversation: (data) => api.post('/api/triage/conversation', data),
+  transcribe: (formData) => api.post('/api/triage/transcribe', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
 };
 
 // Health check

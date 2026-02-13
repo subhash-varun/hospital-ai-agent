@@ -7,18 +7,13 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
-    
-    # LiveKit Configuration
-    LIVEKIT_URL: str
-    LIVEKIT_API_KEY: str
-    LIVEKIT_API_SECRET: str
-    
+
     # Groq API Configuration
     GROQ_API_KEY: str
-    
+
     # ElevenLabs TTS Configuration
     ELEVENLABS_API_KEY: str
-    
+
     # Database Configuration
     DATABASE_URL: str = "sqlite:///./hospital.db"
     

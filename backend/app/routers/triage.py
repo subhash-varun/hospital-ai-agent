@@ -1,7 +1,7 @@
 """
 API routes for AI-powered symptom triage
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, UploadFile, File
 from ..schemas import (
     TriageRequest,
     TriageResponse,
@@ -74,4 +74,40 @@ async def handle_conversation(request: ConversationRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate conversation response: {str(e)}"
+        )
+
+
+@router.post("/transcribe")
+async def transcribe_audio(audio_file: UploadFile = File(...)):
+    """
+    Transcribe audio file to text using Groq STT
+    """
+    try:
+        # Validate file type
+        if not audio_file.content_type.startswith('audio/'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File must be an audio file"
+            )
+
+        # Read audio file
+        audio_data = await audio_file.read()
+
+        # Create a temporary file-like object
+        from io import BytesIO
+        audio_buffer = BytesIO(audio_data)
+        audio_buffer.name = audio_file.filename or "audio.wav"
+
+        # Transcribe using Groq
+        transcription = await groq_service.transcribe_audio(audio_buffer)
+
+        return {
+            "transcription": transcription,
+            "filename": audio_file.filename,
+            "content_type": audio_file.content_type
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to transcribe audio: {str(e)}"
         )
